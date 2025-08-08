@@ -16,9 +16,9 @@ import com.Contact.entity.Contact;
 public class ContactController {
 
     private List<Contact> contactList = List.of(
-        new Contact(1L, "lee@email.com", "Lee", 101L),
-        new Contact(2L, "john@email.com", "John", 101L),
-        new Contact(3L, "alex@email.com", "Alex", 102L)
+        new Contact(1L, "alekhya@email.com", "alekhya", 101L),
+        new Contact(2L, "jashu@email.com", "jashu", 101L),
+        new Contact(3L, "raj@email.com", "raj", 102L)
     );
 
     @GetMapping("/user/{userId}")

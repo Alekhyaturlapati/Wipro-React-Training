@@ -1,22 +1,27 @@
 package com.Contact.entity;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "contacts")
 public class Contact {
 
+    @Id
     private Long cId;
     private String email;
     private String contactName;
     private Long userId;
+
+    public Contact() {
+    }
 
     public Contact(Long cId, String email, String contactName, Long userId) {
         this.cId = cId;
         this.email = email;
         this.contactName = contactName;
         this.userId = userId;
-    }
-
-    public Contact() {
-
-
     }
 
     public Long getcId() {
