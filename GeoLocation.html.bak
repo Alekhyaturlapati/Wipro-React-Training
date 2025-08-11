@@ -1,0 +1,169 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Geo Demo — Button Voice</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;margin:18px}
+    header{display:flex;gap:10px;align-items:center}
+    .controls{margin-top:10px}
+    #info{margin-top:14px;display:flex;gap:20px}
+    #left{flex:1} #map{width:360px;height:250px;border:1px solid #ddd}
+    button{padding:8px 12px;margin-right:6px}
+  </style>
+</head>
+<body>
+  <h2>Geolocation Demo — Button Voice</h2>
+  <p>Get location, preview map, and speak a simple navigation instruction when you click the button.</p>
+
+  <div class="controls">
+    <button id="btnGet">Get Current Location</button>
+    <button id="btnCopy">Copy Coordinates</button>
+    <button id="btnSpeak">Speak Instruction</button>
+    <button id="btnStartTrack">Start Tracking</button>
+    <button id="btnStopTrack">Stop Tracking</button>
+    <button id="btnDest">Enter Destination</button>
+  </div>
+
+  <div id="info">
+    <div id="left">
+      <div><strong>Status:</strong> <span id="status">idle</span></div>
+      <div><strong>Latitude:</strong> <span id="lat">—</span></div>
+      <div><strong>Longitude:</strong> <span id="lon">—</span></div>
+      <div><strong>Accuracy (m):</strong> <span id="acc">—</span></div>
+      <div><strong>Timestamp:</strong> <span id="time">—</span></div>
+      <div style="margin-top:8px"><a id="gmaps" href="#" target="_blank">Open in Google Maps</a></div>
+    </div>
+    <div id="map"></div>
+  </div>
+
+<script>
+const btnGet = document.getElementById('btnGet');
+const btnCopy = document.getElementById('btnCopy');
+const btnSpeak = document.getElementById('btnSpeak');
+const btnStartTrack = document.getElementById('btnStartTrack');
+const btnStopTrack = document.getElementById('btnStopTrack');
+const btnDest = document.getElementById('btnDest');
+
+const statusEl = document.getElementById('status');
+const latEl = document.getElementById('lat');
+const lonEl = document.getElementById('lon');
+const accEl = document.getElementById('acc');
+const timeEl = document.getElementById('time');
+const gmaps = document.getElementById('gmaps');
+const mapDiv = document.getElementById('map');
+
+let lastPos = null;
+let watchId = null;
+let destination = null;
+
+function updateMap(lat, lon){
+  mapDiv.innerHTML = `<iframe width="100%" height="100%" frameborder="0" style="border:0"
+    src="https://www.google.com/maps?q=${lat},${lon}&z=15&output=embed"></iframe>`;
+}
+
+function showPosition(pos){
+  const {latitude, longitude, accuracy} = pos.coords;
+  lastPos = {latitude, longitude};
+  statusEl.textContent = 'location obtained';
+  latEl.textContent = latitude.toFixed(6);
+  lonEl.textContent = longitude.toFixed(6);
+  accEl.textContent = accuracy;
+  timeEl.textContent = new Date(pos.timestamp).toLocaleString();
+  gmaps.href = `https://www.google.com/maps?q=${latitude},${longitude}`;
+  updateMap(latitude, longitude);
+}
+
+btnGet.addEventListener('click', () => {
+  if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
+  statusEl.textContent = 'getting location…';
+  navigator.geolocation.getCurrentPosition(showPosition, err => {
+    statusEl.textContent = 'error: ' + err.message;
+    alert('Location error: ' + err.message);
+  }, {enableHighAccuracy:true, timeout:10000});
+});
+
+btnCopy.addEventListener('click', async ()=> {
+  if (!lastPos) { alert('No coordinates yet'); return; }
+  const text = `${lastPos.latitude},${lastPos.longitude}`;
+  try { await navigator.clipboard.writeText(text); alert('Copied: ' + text); }
+  catch(e){ alert('Copy failed'); }
+});
+
+function speak(text){
+  if (!('speechSynthesis' in window)) { alert('Speech synthesis not supported'); return; }
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US';
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+}
+
+btnSpeak.addEventListener('click', ()=> {
+  if (!lastPos) { alert('Get location first'); return; }
+  if (!destination) {
+    destination = {lat: lastPos.latitude + 0.003, lon: lastPos.longitude + 0.002}; // fallback
+  }
+  const distM = calcDistance(lastPos.latitude, lastPos.longitude, destination.lat, destination.lon);
+  const dir = getDirection(lastPos.latitude, lastPos.longitude, destination.lat, destination.lon);
+  speak(`In ${distM} meters, ${dir} turn.`);
+});
+
+function calcDistance(lat1, lon1, lat2, lon2){
+  function toRad(v){ return v * Math.PI/180; }
+  const R=6371000;
+  const dlat = toRad(lat2 - lat1);
+  const dlon = toRad(lon2 - lon1);
+  const a = Math.sin(dlat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2)) * Math.sin(dlon/2)**2;
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+}
+
+function getDirection(lat1, lon1, lat2, lon2){
+  const heading = Math.atan2(lon2-lon1, lat2-lat1) * 180/Math.PI;
+  return heading>0 ? 'right' : 'left';
+}
+
+btnStartTrack.addEventListener('click', ()=>{
+  if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
+  if (watchId) { alert('Already tracking'); return; }
+  statusEl.textContent = 'tracking...';
+  watchId = navigator.geolocation.watchPosition(showPosition, err=>{
+    statusEl.textContent = 'error: ' + err.message;
+  }, {enableHighAccuracy:true});
+});
+
+btnStopTrack.addEventListener('click', ()=>{
+  if (watchId) {
+    navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+    statusEl.textContent = 'tracking stopped';
+  } else {
+    alert('Not tracking');
+  }
+});
+
+// UPDATED: Enter destination by place name (OpenStreetMap Nominatim)
+btnDest.addEventListener('click', ()=>{
+  const placeName = prompt('Enter destination place name:');
+  if (!placeName) { alert('No place entered'); return; }
+
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(placeName)}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.length > 0) {
+        const loc = data[0];
+        destination = {lat: parseFloat(loc.lat), lon: parseFloat(loc.lon)};
+        alert(`Destination set to ${placeName} (${loc.lat}, ${loc.lon})`);
+      } else {
+        alert('Could not find location: ' + placeName);
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert('Error getting location');
+    });
+});
+
+</script>
+</body>
+</html>
