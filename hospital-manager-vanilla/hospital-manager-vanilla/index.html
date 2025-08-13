@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hospital Manager</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="assets/styles.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-primary bg-primary">
+  <div class="container-fluid">
+    <a class="navbar-brand text-white d-flex align-items-center gap-2" href="#">
+      <i class="bi bi-hospital"></i>
+      <strong>Hospital Manager</strong>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="mainNav">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link active text-white" data-route="dashboard" href="#">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link text-white-50" data-route="patients" href="#">Patients</a></li>
+        <li class="nav-item"><a class="nav-link text-white-50" data-route="doctors" href="#">Doctors</a></li>
+        <li class="nav-item"><a class="nav-link text-white-50" data-route="departments" href="#">Departments</a></li>
+        <li class="nav-item"><a class="nav-link text-white-50" data-route="appointments" href="#">Appointments</a></li>
+      </ul>
+      <div class="d-flex gap-2">
+        <button id="btnExport" class="btn btn-outline-light btn-sm"><i class="bi bi-box-arrow-up"></i> Export Data</button>
+        <label class="btn btn-outline-light btn-sm mb-0" for="importFile"><i class="bi bi-box-arrow-in-down"></i> Import Data</label>
+        <input id="importFile" type="file" accept="application/json" class="d-none">
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main class="container py-4">
+  <!-- Dashboard -->
+  <section id="view-dashboard">
+    <div class="row g-3">
+      <div class="col-12 col-md-3">
+        <div class="card shadow-sm">
+          <div class="card-body d-flex align-items-center justify-content-between">
+            <div>
+              <div class="text-muted">Patients</div>
+              <div class="h3 mb-0" id="countPatients">0</div>
+            </div>
+            <div class="fs-1"><i class="bi bi-person-hearts"></i></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-3">
+        <div class="card shadow-sm">
+          <div class="card-body d-flex align-items-center justify-content-between">
+            <div>
+              <div class="text-muted">Doctors</div>
+              <div class="h3 mb-0" id="countDoctors">0</div>
+            </div>
+            <div class="fs-1"><i class="bi bi-person-workspace"></i></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-3">
+        <div class="card shadow-sm">
+          <div class="card-body d-flex align-items-center justify-content-between">
+            <div>
+              <div class="text-muted">Departments</div>
+              <div class="h3 mb-0" id="countDepartments">0</div>
+            </div>
+            <div class="fs-1"><i class="bi bi-buildings"></i></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-3">
+        <div class="card shadow-sm">
+          <div class="card-body d-flex align-items-center justify-content-between">
+            <div>
+              <div class="text-muted">Appointments (Today)</div>
+              <div class="h3 mb-0" id="countAppointmentsToday">0</div>
+            </div>
+            <div class="fs-1"><i class="bi bi-calendar2-week"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-4 shadow-sm">
+      <div class="card-header bg-white">
+        <strong>Quick Actions</strong>
+      </div>
+      <div class="card-body d-flex flex-wrap gap-2">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalPatient"><i class="bi bi-person-plus"></i> Add Patient</button>
+        <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#modalDoctor"><i class="bi bi-person-add"></i> Add Doctor</button>
+        <button class="btn btn-info text-white" data-bs-toggle="modal" data-bs-target="#modalDepartment"><i class="bi bi-building-add"></i> Add Department</button>
+        <button class="btn btn-success" onclick="openAppointmentModal()" type="button"><i class="bi bi-calendar-plus"></i> Book Appointment</button>
+
+      </div>
+    </div>
+
+    <p class="text-center text-muted mt-4 small">
+      Welcome to Our Hospital<span class="text-danger">🏥</span>.
+      Your Health is Our First Priority <span class=""text-danger">♥</span>
+    </p>
+  </section>
+
+  <!-- Patients -->
+  <section id="view-patients" class="d-none">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="mb-0">Patients</h5>
+      <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalPatient"><i class="bi bi-person-plus"></i> Add Patient</button>
+    </div>
+    <div class="input-group mb-2">
+      <span class="input-group-text"><i class="bi bi-search"></i></span>
+      <input id="searchPatients" class="form-control" placeholder="Search by name, phone or id">
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th><th>Name</th><th>Gender</th><th>Age</th><th>Phone</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyPatients"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Doctors -->
+  <section id="view-doctors" class="d-none">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="mb-0">Doctors</h5>
+      <button class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#modalDoctor"><i class="bi bi-person-add"></i> Add Doctor</button>
+    </div>
+    <div class="input-group mb-2">
+      <span class="input-group-text"><i class="bi bi-search"></i></span>
+      <input id="searchDoctors" class="form-control" placeholder="Search by name, specialty or id">
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th><th>Name</th><th>Dept</th><th>Specialty</th><th>Phone</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyDoctors"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Departments -->
+  <section id="view-departments" class="d-none">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="mb-0">Departments</h5>
+      <button class="btn btn-info text-white btn-sm" data-bs-toggle="modal" data-bs-target="#modalDepartment"><i class="bi bi-building-add"></i> Add Department</button>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th><th>Name</th><th>Head</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyDepartments"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Appointments -->
+  <section id="view-appointments" class="d-none">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="mb-0">Appointments</h5>
+      <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalAppointment"><i class="bi bi-calendar-plus"></i> Book Appointment</button>
+    </div>
+    <div class="input-group mb-2">
+      <span class="input-group-text"><i class="bi bi-search"></i></span>
+      <input id="searchAppointments" class="form-control" placeholder="Search by patient, doctor, or date">
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th><th>Date</th><th>Time</th><th>Patient</th><th>Doctor</th><th>Department</th><th>Notes</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyAppointments"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<!-- Modals -->
+<div class="modal fade" id="modalPatient" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Add / Edit Patient</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="formPatient">
+        <div class="modal-body row g-2">
+          <input type="hidden" id="patientId">
+          <div class="col-12 col-md-8">
+            <label class="form-label">Name</label>
+            <input id="patientName" class="form-control" required>
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="form-label">Gender</label>
+            <select id="patientGender" class="form-select" required>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="form-label">Age</label>
+            <input id="patientAge" type="number" min="0" class="form-control" required>
+          </div>
+          <div class="col-12 col-md-8">
+            <label class="form-label">Phone</label>
+            <input id="patientPhone" class="form-control">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Address</label>
+            <input id="patientAddress" class="form-control">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" type="submit">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalDoctor" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Add / Edit Doctor</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="formDoctor">
+        <div class="modal-body row g-2">
+          <input type="hidden" id="doctorId">
+          <div class="col-12 col-md-8">
+            <label class="form-label">Name</label>
+            <input id="doctorName" class="form-control" required>
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="form-label">Phone</label>
+            <input id="doctorPhone" class="form-control">
+          </div>
+          <div class="col-6 col-md-6">
+            <label class="form-label">Department</label>
+            <select id="doctorDept" class="form-select" required></select>
+          </div>
+          <div class="col-6 col-md-6">
+            <label class="form-label">Specialty</label>
+            <input id="doctorSpecialty" class="form-control">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" type="submit">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalDepartment" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Add / Edit Department</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="formDepartment">
+        <div class="modal-body row g-2">
+          <input type="hidden" id="departmentId">
+          <div class="col-12 col-md-8">
+            <label class="form-label">Name</label>
+            <input id="departmentName" class="form-control" required>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label">Head of Dept.</label>
+            <input id="departmentHead" class="form-control">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" type="submit">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalAppointment" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Book / Edit Appointment</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="formAppointment">
+        <div class="modal-body row g-2">
+          <input type="hidden" id="appointmentId">
+          <div class="col-12 col-md-3">
+            <label class="form-label">Date</label>
+            <input id="apptDate" type="date" class="form-control" required>
+          </div>
+          <div class="col-12 col-md-3">
+            <label class="form-label">Time</label>
+            <input id="apptTime" type="time" class="form-control" required>
+          </div>
+          <div class="col-12 col-md-3">
+            <label class="form-label">Department</label>
+            <select id="apptDept" class="form-select" required></select>
+          </div>
+          <div class="col-12 col-md-3">
+            <label class="form-label">Doctor</label>
+            <select id="apptDoctor" class="form-select" required></select>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Patient</label>
+            <select id="apptPatient" class="form-select" required></select>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Notes</label>
+            <textarea id="apptNotes" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-success" type="submit">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
